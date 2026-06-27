@@ -1,0 +1,127 @@
+delete触发器中的自带表和现表中没有一样的数据
+
+                                     Inserted逻辑表                     Deleted逻辑表
+增加记录（insert）        存放增加的记录                             无
+
+删除记录（delete）             无                                  存放被删除的记录
+
+修改记录（update）     存放更新后的记录                 存放更新前的记录
+
+----------------------------------------------------------------------
+插入触发器，当有新数据插入cj表时，将每门课的选课人数插入kk表中
+create or alter trigger cf
+on cj
+for insert
+as 
+	declare yb cursor  
+	for
+	select kcdh,count(*) as renshu
+	from cj group by kcdh
+	begin 
+		declare @m varchar(12),@k int
+		open yb
+		fetch next from yb into @m,@k;
+		while @@FETCH_STATUS=0
+		begin
+		insert into kk values(@m,@k)
+		fetch next from yb into @m,@k;
+		end
+	close yb
+	deallocate yb
+	end
+
+create table kk(kcdh varchar(12),renshu int)
+select * from kk
+insert into cj values('000102','001',98)
+--------------------------------------------------------------------
+当输入的性别是男，禁止插入，并显示错误提示语句
+create or alter trigger cf
+on xs
+for insert
+as 
+	declare @xb nchar(10)
+	select @xb=xb from inserted
+
+	if(@xb!='男')
+	begin
+		rollback tran  --事务回滚
+		raiserror('输入性别有错',16,10)
+	end
+
+	insert into xs(xh,xb) values('01001','女')
+-------------------------------------------------------
+create or alter trigger cf
+on cj
+for delete
+as 
+	declare @cj int
+	select @cj=cj from deleted
+
+	if(@cj<60)
+	begin
+		rollback tran  --事务回滚
+		raiserror('<60',16,10)
+	end
+
+	delete cj where cj<60
+--------------------------------------------------------
+(3)建立一个触发器，当删除xs表中的记录时，自动删除cj表中对应学号的记录
+create or alter trigger cf
+on xs
+for delete
+as 
+	declare @xh int
+	select @xh=xh from deleted
+	
+	delete from cj where xh=@xh
+	print '删除成功'
+
+
+/*exec sp_helpconstraint cj
+alter table cj drop constraint 约束名*/   --删除约束
+delete from xs where xh=002901  
+select * from xs
+select * from cj
+drop trigger cf
+
+(4)建立一个触发器，当修改cj表中的成绩时，如果修改的值小于0，则不能修改该学生的成绩
+---------------------------------------
+create or alter trigger cf1
+on cj
+for update
+as 
+	declare @m int,@a varchar(10),@b varchar(9),@c int
+	select @m=cj,@a=xh,@b=kcdh from inserted
+	
+	if(@m<=0)
+	begin                     --不适用事务回滚，修改后，用deleted表中数据赋值回来
+		select @c=cj from deleted    
+		update cj set cj=@c where xh=@a and kcdh=@b
+		print '修改有误'
+	end
+
+	update cj set cj=0 where xh=000102  
+	select * from cj
+
+
+drop trigger cf
+-----------------------------------------------demo
+create or alter trigger cf1
+on cj
+for update
+as 
+	declare @cj int
+	select @cj=cj from inserted
+	
+	if(@cj<=0)
+	begin
+		rollback tran  --事务回滚
+		print '修改有误'
+	end
+
+	update cj set cj=0 where xh=000102  
+	select * from cj
+
+
+drop trigger cf
+

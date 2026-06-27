@@ -1,0 +1,157 @@
+1、创建一个存储过程，以学号为参数，输出该学生的姓名
+2、创建一个存储过程，以学号为参数，修改该学生所有课程的成绩。若该成绩在90分以上，  则成绩增加1；若80到89，则成绩增加5；  若属于其他情况，则增加8。
+3、创建一个存储过程，以学号为参数，返回该学生的年龄（以参数形式返回）。  
+4、创建一个存储过程，以性别为参数，输出年龄最大的10个学生信息。
+5、创建一个存储过程，以学号和性别作为参数，修改学生的性别为所输入的性别。  -如果修改成功，则显示“学生由……性别变为……性别”；如果不存在该学生，则显示  “学号不存在，请输入正确的学号。”
+6、创建一个存储过程，以两个整数为参数，输出成绩排序在两个参数之间的学生信息（姓名，成绩，课程名）。
+--------------------------1
+create or alter proc pr
+(@xh int)
+as
+begin 
+	declare @xm char(10)
+	declare yb cursor for
+		select xm from xs where xh=@xh
+	open yb
+	fetch next from yb into @xm
+	print @xm
+
+	close yb
+	deallocate yb
+end
+go
+exec pr 000101
+----------------------------2
+create or alter proc pr
+(@xh int)
+as
+begin
+	declare @cj int
+	declare yb cursor for
+	select cj from cj where xh=@xh
+	open yb
+	fetch next from yb into @cj
+	if(@cj>=90)
+		begin
+		update cj set cj=cj+1
+		where xh=@xh
+		end
+	if(@cj<90 and @cj>=80)
+		begin
+		update cj set cj=cj+5
+		where xh=@xh
+		end
+	if(@cj<80)
+		update cj set cj=cj+8
+		where xh=@xh
+		close yb
+		deallocate yb
+end
+go
+exec pr 000101
+------------------------3
+
+create or alter proc pr
+(@xh int)
+as
+begin 
+	declare @nl1 int
+	declare yb cursor
+for select year(getdate())-year(csrq) from xs where xh=@xh
+open yb
+fetch next from yb into @nl1
+
+while @@fetch_status=0 
+begin
+fetch next from yb into @nl1
+end
+close yb
+deallocate yb
+return @nl1
+end
+go
+
+declare @nl int
+exec @nl=pr 000101
+print @nl
+-----------------------------4
+create or alter proc pr
+(@xb char(10))
+as
+begin 
+	declare @nl1 int
+	declare yb cursor
+	for select * from xs where xb=@xb
+	order by year(getdate())-year(csrq) desc
+	open yb
+	fetch next from yb 
+	declare @i int=1
+while @@fetch_status=0 
+begin
+
+	while @i<10
+	begin
+	fetch next from yb
+	set @i=@i+1
+	end
+end
+close yb
+deallocate yb
+end
+go
+
+exec pr '男'
+
+----------------------------5
+create or alter proc pr
+(@xh int,@xb char(10))
+as
+begin
+	declare @xb1 char(10)
+	update xs set xb=@xb
+	where xh=@xh
+	
+
+	declare yb cursor
+	for select xb from xs where xh=@xh
+	open yb
+	fetch next from yb into @xb1
+
+
+	if (@@error=0)
+	print '学生由'+@xb1+'性别变为'+@xb+'性别'
+
+	else
+	print '学号不存在，请输入正确的学号'   
+
+	/* if @@fetch_status!=0                  --当找不到学号时
+	print '学号不存在，请输入正确的学号'
+	end*/
+
+	close yb
+	deallocate yb
+end
+
+exec pr 000101,'男'
+------------------------6
+create or alter proc pr
+(@zs int,@zs1 int)
+as
+begin
+declare @xm char(10),@cj int,@kcm char(10)
+	declare yb cursor
+	for select xm,cj,kcm from xs join cj on xs.xh=cj.xh join kc on kc.kcdh=cj.kcdh
+	where cj>@zs and cj<@zs1
+	open yb
+	fetch next from yb into @xm,@cj,@kcm
+
+	while @@fetch_status=0 
+	begin
+	print @xm+str(@cj)+@kcm
+		fetch next from yb into @xm,@cj,@kcm
+	end
+close yb
+deallocate yb
+end
+
+exec pr 80,90

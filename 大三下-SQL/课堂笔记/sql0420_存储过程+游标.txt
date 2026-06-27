@@ -1,0 +1,268 @@
+整体格式：
+begin
+	update 表
+		set****
+	
+	if *** notfound then
+	*******
+	end if
+end
+
+若update  语句执行不成功，则notfound值为1
+declare//声明变量
+全局变量，是系统变量，不可建立和修改 //@@
+@@rowcount：返回受到上一语句影响的行数
+@@version：当前sql server的版本   
+//print @@version --以文本输出版本信息
+//select @@version --以表格形式输出
+cast 函数用法:
+select * from xs
+select '一共查询了'+ cast(@@rowcount as varchar(15))+'行'  --一起查询有150行，分开查只有1行
+
+局部变量，自己定义的//@
+
+局部变量声明的语法格式为：
+       DECLARE @局部变量名  数据类型[,n]
+//declare @xmm nchar(10)
+局部变量赋值：
+    SET @局部变量名=表达式
+也可以使用select语句
+    select @局部变量名=表达式[,n]
+-------------------------------------------
+--向products表插入一条记录，如果插入成功则输出‘插入记录成功’，否则输出‘出现错误’
+begin
+	insert into xs(xh,xm) values('000101  ','aaa')
+	if @@error=0
+		print '成功'
+	else
+	print '不成功'
+end
+--会出现违反了 PRIMARY KEY 约束“PK_xs”。不能在对象“dbo.xs”中插入重复键。重复键值为 (000101  )。
+因为插入的数值与主键冲突
+------------------------------------
+--设变量，再赋值变量，输出想要的
+declare @name varchar(25)
+begin
+select @name=xm from xs where xh='000101'
+print '姓名：'+@name
+end
+------------------------------------
+--while语句；
+--输出 kc表中kcdh为10以内的课程名。
+DECLARE @id int
+DECLARE @productname varchar(40)
+SET @id=1
+WHILE @id<10
+BEGIN
+  SELECT @productname=kcm FROM kc
+  WHERE kcdh=@id
+  PRINT @productname
+  SET @id=@id+1
+END
+-------------------------------------------------------测试
+1、建立一个表，用来表示商品的价格，并插入数据若干（表结构自己定义）。若平均价格少于 $30，则将每个商品的价格加倍，然后选择最高价。如果最高价少于或等于 $50，则再次将每个商品的价格加倍。直到最高价格超过 $50为止。最后打印一条消息“游戏结束”。
+
+2、某数从1循环到10，并打印该数。当循环到7时，结束本次循环并继续，当循环到8时，跳出循环。
+
+3、计算“数据库”课程的男女同学的平均成绩，若男同学平均成绩比较高，则显示“男>女”，相等显示“男=女”，否则显示“男<女”
+
+4、计算1！+2！+3！
+-----------------1
+create table g(
+price int
+)
+begin
+	insert into g(price) values('11 ')
+		insert into g(price) values('1 ')
+	if @@error=0
+		print '成功'
+	else
+	print '不成功'
+end
+
+declare @avgp int
+declare @max int
+select @max=max(price) from g
+while @max<50
+begin
+	select @avgp=avg(price) from g
+	if  @avgp<30
+		update g set price=price*2
+	select @max=max(price) from g
+	if @max<=50 
+		update g set price=price*2
+	print '游戏结束'
+end
+----*******改   1
+if(select avg(price) from g)<30
+begin
+while (select max(price) from g)<=50
+update g set price=price*2
+end
+print '游戏结束'
+-------------2
+DECLARE @id int
+SET @id=1
+WHILE @id<10
+BEGIN
+   print @id 
+   set @id=@id+1
+   if @id=7
+   break 
+   continue
+   if @id=8
+   break
+END
+-------------3
+declare @b int
+declare @g int
+begin
+select @b=avg(cj) from cj join xs on xs.xh=cj.xh
+where xb='男'
+select @g=avg(cj) from cj join xs on xs.xh=cj.xh
+where xb='女'
+if  @b=@g print'男=女'
+else if @b>@g print '男>女'
+else if @b<@g print '男<女'
+end
+-----------------4
+declare @i int
+declare @s int
+declare @su int
+SET @i=1
+SET @s=1
+SET @su=0
+while @i<4
+begin
+	set @s=@s*@i
+	set @i=@i+1
+	set @su=@su+@s
+	print @su
+end
+----------------------------------------------------------存储过程和游标
+游标：处理查询语句的结果//指针，初始指向第一行前面
+declare cursor             --声明游标
+open                           --打开游标
+fetch into                    --从语句中提取数据（结合while）
+close  游标名                          --关闭游标
+deallocate   游标名                --释放游标
+-------------------------------------
+declare *** cursor for ****
+
+open yb
+
+fetch yb into @**,@**...    游标只取出一行，有几列，有几个@
+
+fetch yb scroll      first/last/next
+------------------------------------ 例子
+declare yb cursor 
+for select xm from xs
+
+declare @xm char(10)    --不输入具体的长度，则输不出结果
+
+open yb
+fetch next from yb into @xm
+while @@fetch_status=0   --表示fetch有数据提取出来
+begin
+	print 'xm:'+@xm
+	fetch next from yb into @xm
+/*
+begin 
+	update xs set xm='aaa'
+	where current of yb    --游标当前位置
+end
+*/
+end
+close yb
+deallocate yb
+-------------------------------------------
+课堂练（未交）
+(1)定义一个游标，将cj表中成绩不及格的学生学号和姓名显示出来。
+(2)通过游标，将成绩表中第2条记录的学生的成绩降低5分
+(3)定义一个游标，删除成绩表中成绩在90分以上的学生
+(4)使用游标统计学生的选课情况（显示学生的姓名，选修的课程编号和选修的课程门数)
+---------------------------------------1
+declare yb cursor 
+for select distinct cj.xh,xm from xs join cj on xs.xh=cj.xh
+	where cj<60
+
+open yb
+declare @xh char(10)             --declare @xh int
+declare @xm varchar(15)
+fetch next from yb into @xh,@xm
+while @@fetch_status=0   --表示fetch有数据提取出来
+begin
+	
+	print @xm+'   '+ @xh               --print @xm+'   '+ cast(@xh as varchar(15))
+	fetch next from yb into @xh,@xm
+
+end
+close yb
+deallocate yb
+------------------------------------------2
+declare yb scroll cursor for    --指针随意移动scroll cursor，才可以有first等
+select * from  cj
+
+open yb
+begin
+	fetch absolute 2 from yb   --fetch first//absolute *
+	while @@fetch_status=0   --if @@fetch_status=0
+	update cj set cj=cj-5 
+	where current of yb    --注意修改游标所指的地方
+end
+close yb
+deallocate yb
+------------------------------------------3
+declare
+	@xh1 char,
+	@kcdh char,
+	@cj numeric
+declare yb cursor
+for select * from cj 
+
+open yb
+fetch next from yb   --加上into，就不会有显示，否则会有一行行执行出来
+into @xh1,@kcdh,@cj
+while @@fetch_status=0 
+begin
+  if @cj>90
+  delete from cj where current of yb
+  fetch next from yb
+  into @xh1,@kcdh,@cj
+end
+close yb
+deallocate yb
+--------------------------------------------4
+declare @xm varchar(10),@xm1 varchar(10) --定义姓名1，如果和游标所指的不同，重新计数
+declare @kcdh varchar(10)
+declare @sum int,@sum1 int
+set @sum=0
+set @sum1=0
+
+declare yb cursor    --赋值游标信息，每一个学生的选课情况
+for select xm,kcdh 
+           from cj,xs 
+           where cj.xh=xs.xh      
+open yb
+fetch next from yb into @xm,@kcdh
+
+set @xm1=@xm
+while @@fetch_status=0  --当游标有存储信息时
+begin 
+  print '姓名:'+@xm+'课程编号：'+@kcdh
+  set @sum1=@sum1+1
+  set @sum=@sum+1
+  fetch next from yb into @xm,@kcdh  --移动游标
+  if(@xm!=@xm1)   --当姓名不同时，重新计数门数
+	begin
+	print @xm1+'选课门数:'+str(@sum)             --convert(char(10), @sum) //cast(@sum as varchar(10))
+    	set @xm1=@xm
+	set @sum=0
+	end
+end
+print @xm1+'选课门数:'+cast(@sum as varchar(10))
+
+close yb   
+deallocate yb    
+print '总选课门数:'+cast(@sum1 as varchar(10))
+

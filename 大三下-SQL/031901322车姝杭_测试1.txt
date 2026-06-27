@@ -1,0 +1,55 @@
+1查询平均成绩大于60分的学生的学号和平均成绩
+2查询所有学生的学号，选课数和总成绩
+3查询只选修了两门课程的学生的学号
+4查询男生、女生的人数
+5查询名字中含有“风”的学生的信息
+6查询每门课程的平均成绩，结果按平均成绩升序排序，平均成绩相同的，按课程号降序排列
+7查询至少选修了两门课程的学生学号
+8查询计算机系的姓刘且单名的学生的信息
+9查询两门以上不及格课程的同学的学号和平均成绩
+10查询每门课程不及格的人数
+
+select xh,avg(cj) from cj
+group by xh
+having avg(cj)>60
+
+select xh,count(kcdh) 选课数,sum(cj) from cj
+group by xh
+
+select xh,count(kcdh) from cj
+group by xh
+having count(kcdh)=2
+
+select xb,count(xh) from xs  --select xb,count(*) from xs可以，因为学号是主键，没有空值
+group by xb   --统计男女生的人数 
+
+select * from xs
+where xm like '%风%'
+
+select kcdh,avg(cj) from cj
+group by kcdh 
+order by avg(cj) asc,kcdh desc
+
+select xh,count(kcdh) from cj
+group by xh
+having count(kcdh)>2
+
+select * from xs
+where zy='自动控制' and xm like '刘  _' --没有计算机
+ 
+---原代码
+select xh,count(kcdh) from cj   --求出来的平均成绩是不及格的平均成绩
+where cj<60
+group by xh
+having count(kcdh)>=2
+---修改：
+select xh,avg(cj) from cj   --求出来的平均成绩是总平均成绩
+where xh in (select xh  from cj
+	where cj<60
+	group by xh
+	having count(*)>=2)
+group by xh
+
+select kcdh,count(*) from cj 
+where cj<60
+group by kcdh

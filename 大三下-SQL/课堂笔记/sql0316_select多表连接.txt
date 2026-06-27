@@ -1,0 +1,154 @@
+select xb,count(xh) from xs
+group by xb   --统计男女生的人数
+
+select zy,xb,count(xh) from xs
+group by zy,xb  --统计每个专业男女生的人数
+
+select zy,xb,count(xh) from xs
+group by zy,xb
+having count(xh) >3  --输出人数超过3人的每个专业男女生的人数//注意用having
+---------------------------------------------------
+
+select xh,xm,xb,year(getdate()-year(csrq)) from xs
+
+select distinct xh from cj
+
+select xh,xm,xb from xs
+where year(getdate()-year(csrq))>33
+
+select * from xs
+where zy in('自动控制','计算机及应用')
+
+select * from xs
+where xm like '李%'
+
+select top 10 percent * from xs
+
+select top 5 * from xs
+
+select kcdh,avg(cj),sum(cj) from cj
+group by kcdh
+
+select max(cj),min(cj),avg(cj) from cj
+where kcdh='001'
+
+select count(distinct xh) from cj  --求选修了课程的学生人数//count(distinct xh)把重复的学号删去
+----------------------------------------------
+--上课测试：
+select xh,avg(cj) from cj
+group by xh
+having avg(cj)>60
+
+select xh,count(kcdh) 选课数,sum(cj) from cj
+group by xh
+
+select xh,count(kcdh) from cj
+group by xh
+having count(kcdh)=2
+
+select xb,count(xh) from xs  --select xb,count(*) from xs可以，因为学号是主键，没有空值
+group by xb   --统计男女生的人数 
+
+select * from xs
+where xm like '%风%'
+
+select kcdh,avg(cj) from cj
+group by kcdh 
+order by avg(cj) asc,kcdh desc
+
+select xh,count(kcdh) from cj
+group by xh
+having count(kcdh)>2
+
+select * from xs
+where zy='自动控制' and xm like '刘  _' --没有计算机
+ 
+---原代码
+select xh,avg(cj) from cj   --求出来的平均成绩是不及格的平均成绩
+where cj<60
+group by xh
+having count(kcdh)>=2
+---修改：
+select xh,avg(cj) from cj   --求出来的平均成绩是总平均成绩
+where xh in (select xh  from cj
+	where cj<60
+	group by xh
+	having count(*)>=2)
+group by xh
+
+select kcdh,count(*) from cj 
+where cj<60
+group by kcdh
+
+------------------------------
+(1)查询学生的平均年龄
+(2)查询每门课程的最高分，最低分和选课人数
+(3)查询每个学生的所修课程平均成绩和学号
+(4)查询成绩及格的学生的所选课程的最高分、学号
+(5)查询选课人数不足3人的课程代号及其相应的学生人数
+(6)查询平均成绩在80分以上的学号和平均成绩
+(7)查询每个学生的选课门数，并按选课门数的递增顺序显示结果
+(8)查询选课门数超过2门的学生的平均成绩和选课门数
+(9)查询总成绩超过200分的学生的学号、总成绩
+(10) 查询选修了001号课程的学生的姓名
+(11)求选修了课程的学生的姓名，课程号和成绩
+
+select avg(year(getdate())-year(csrq)) from xs
+
+select max(cj),min(cj),count(*) from cj
+group by kcdh
+
+select avg(cj),xh from cj
+group by xh
+
+--4(not in 查询所有的成绩都及格)
+select max(cj),xh from cj
+where xh not in(
+select xh from cj
+where cj<60
+)
+group by xh
+
+select kcdh,count(xh) from cj 
+group by kcdh 
+having count(xh)<3
+
+select avg(cj),xh from cj
+group by xh
+having avg(cj)>80
+
+select xh,count(kcdh) from cj
+group by xh
+order by count(kcdh) asc
+
+select avg(cj),count(kcdh) from cj
+group by xh
+having count(kcdh)>2
+
+select xh,sum(cj) from cj
+group by xh
+having sum(cj)>200
+
+select kcdh,xm from xs join cj on cj.xh=xs.xh
+where kcdh='001'
+
+select xm,kcdh,cj from xs join cj on cj.xh=xs.xh
+
+select kcdh,xm from xs join cj on cj.xh=xs.xh
+where kcdh='001'
+
+select xm,kcdh,cj from xs right join cj on cj.xh=xs.xh
+
+select xm,kcm,cj
+from xs,cj,kc
+where xs.xh=cj.xh and cj.kcdh=kc.kcdh
+
+select xm,kcm,cj
+from xs join cj on xs.xh=cj.xh
+join kc on cj.kcdh=kc.kcdh
+---------------------------
+select a1.ename,a2.ename from emp as a,emp as b where a.mno=b.empno 
+--自连接，职工编号和职工的上司编号连接，输出领导姓名
+
+
+

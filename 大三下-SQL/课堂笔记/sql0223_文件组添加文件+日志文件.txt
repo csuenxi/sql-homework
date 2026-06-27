@@ -1,0 +1,114 @@
+--向文件组添加文件
+alter database test_db
+    add file (
+        name ='test_db3', --逻辑文件吗
+        filename ='C:\cc\test_db3.mdf', --物理量文件名
+        size =5 MB, --初始大小
+        maxsize =100 MB, --最大大小
+        filegrowth =5 MB --文件步长
+        )
+
+
+--例1
+create database student
+on
+(name= stu,size=3mb,filename='D:\stu.mdf',filegrowth=10%,maxsize=500mb)
+
+log on
+(name= stu_log,size=3mb,filename='D:\stu_log.ldf',filegrowth=1mb)
+
+--例2
+create database product
+on
+primary --主文件组
+(name=p1_data,filename='D:\product_data1.mdf',size=3mb,filegrowth=15%),
+filegroup userproup 
+(name=p2_data,filename='D:\product_data2.ndf',size=3mb,filegrowth=15%,maxsize=10mb),
+(name=p3_data,filename='D:\product_data3.ndf',size=3mb,filegrowth=15%,maxsize=20mb)
+
+log on
+(name=p1_log,filename='D:\product_log1.ldf',size=2mb,filegrowth=10%),
+(name=p2_log,filename='D:\product_log2.ldf',size=2mb,filegrowth=10%)
+
+
+(1)创建一个jwglxt数据库，主数据文件逻辑名为jwglxt_data,物理文件名为
+jwglxt_data.mdf，初始大小为10M,最大尺寸为无限大，增长速度为1M，日志文件得逻辑名
+为jwglxt_log,物理文件名为jwglxt_log.ldf，初始大小为1M,最大尺寸为5M，增长速度为1M.
+(2)创建一个有三个文件组primary，my_dbfg1,my_dbfg2,一个事务日志文件mylog的数据库，数据库名为hfy。
+Primary文件组包含数据文件my1,初始大小为10M,最大尺寸为50M，增长速度为15%,
+my_dbfg1文件组包含数据文件my2,初始大小为10M,最大尺寸为50M，增长速度为5M,
+my_dbfg2文件组包含数据文件my3,初始大小为10M,最大尺寸为50M，增长速度为5M,
+日志文件得逻辑名
+为mylog,初始大小为1M,最大尺寸为5M，增长速度为1M.
+
+--1
+create database jwglxt
+on
+primary --主文件组
+(name=jwglxt_data,filename='D:\jwglxt_data.mdf',size=10mb,filegrowth=1mb)
+log on   --日志文件名
+(name=jwglxt_log,filename='D:\jwglxt_log.ldf',size=1mb,filegrowth=1mb,maxsize=5mb)
+
+
+--2
+create database hfy
+on
+primary --主文件组
+(name=my1,filename='D:\my1.mdf',size=10mb,filegrowth=15%,maxsize=50mb),
+filegroup my_dbfg1 --其他文件组
+(name=my2,filename='D:\my2.ndf',size=10mb,filegrowth=5mb,maxsize=50mb),
+filegroup my_dbfg2
+(name=my3,filename='D:\my3.ndf',size=10mb,filegrowth=5mb,maxsize=50mb)
+log on
+(name=mylog,filename='D:\mylof.ldf',size=1mb,maxsize=5mb,filegrowth=1mb)
+
+
+-------------------------------------------------------------------
+用create database test命令创建test数据库，并完成以下任务
+(1)更改该数据库，以添加一个初始大小为5M，最大值为10M，增量为1M的数据文件，逻辑名为test_dd,物理名为e:\test_dd.ndf
+ 
+(2)为数据库添加一个日志文件，初始大小都为5M，最大值为10M,增量为1M	
+
+
+(3)为数据库添加一个文件组my_group，并给该文件组添加一个数据文件，初始大小都为5M，最大值为10M,增量为1M
+  
+(4)把步骤3的数据文件从数据库中删除
+
+--(1)
+create database test
+
+alter database test
+add file --添加文件
+(name=test_dd,filename='E:\test_dd.ndf',size=5mb,filegrowth=1mb,maxsize=10mb)
+
+/*--直接添加文件
+create database test
+on
+primary --主文件组
+(name=test_dd1,filename='E:\test_dd.ndf',size=5mb,filegrowth=1mb,maxsize=10mb)*/
+--(2)
+alter database test
+add log file   --添加一个日志文件
+(name=test_ddl,filename='E:\test_dd.ldf',size=5mb,filegrowth=1mb,maxsize=10mb)
+
+--(3)
+alter database test
+add filegroup my_group  --添加文件组
+
+alter database test
+add file                             --添加文件
+(name=test_dd2,filename='E:\test_dd2.ndf',size=5mb,filegrowth=1mb,maxsize=10mb)
+to filegroup my_group  --在指定文件组中添加文件
+
+--(4)把步骤3的数据文件从数据库中删除
+alter database test 
+remove file test_dd2 
+
+--修改已创建的文件信息
+alter database test
+modify file
+(maxsize=50mb,name=test_ddl)  --第一个信息是要修改的信息，第二个为文件名
+
+--删除文件组（要已经为空）
+alter database test
+remove filegroup my_group 

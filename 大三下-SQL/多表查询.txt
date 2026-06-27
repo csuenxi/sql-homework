@@ -1,0 +1,74 @@
+--1求学生学号以及其选修课程的课程号和成绩
+select cj.xh 学号,kcdh 课程号,cj 成绩 from cj
+
+--2求选修了课程01001且成绩在70分以下或90分以上的学生的姓名、课程名称和成绩
+select xm 姓名,kcm 课程名,cj 成绩 from xs,kc,cj
+where xs.xh=cj.xh and kc.kcdh=cj.kcdh
+and cj.kcdh='001' and (cj>90 or cj<70)
+
+--3求年龄大于“王红”的所有学生的学号、姓名和年龄
+select xh 学号,xm 姓名,year(GETDATE())-year(csrq) 年龄 from xs 
+where year(GETDATE())-year(csrq) > 
+(select year(GETDATE())-year(csrq) from xs
+where xm='刘  刚')
+
+select a.xh 学号,a.xm 姓名,year(GETDATE())-year(a.csrq) as yy from xs as a,
+(select year(GETDATE())-year(csrq) as y from xs where xm='刘  刚') as b
+where year(GETDATE())-year(a.csrq)>b.y  
+
+
+--4求与“张维明”年龄相同的学生的姓名和出生日期
+select xm 姓名,year(GETDATE())-year(a.csrq) 出生日期 from xs as a,
+(select year(GETDATE())-year(csrq) as y from xs where xm='刘  刚')as b
+where year(GETDATE())-year(a.csrq)=y
+
+--5求比某一女生年龄大的男生的姓名和学号
+select a.xm 姓名,year(GETDATE())-year(a.csrq) 出生日期 from xs as a,
+(select min(year(GETDATE())-year(csrq)) as y from xs where xb='女')as b 
+where a.xb='男' and year(GETDATE())-year(a.csrq)>y
+
+--6求比全体女生年龄大的男生的姓名和学号
+select a.xm 姓名,year(GETDATE())-year(a.csrq) 出生日期 from xs as a,
+(select max(year(GETDATE())-year(csrq)) as y from xs where xb='女')as b 
+where a.xb='男' and year(GETDATE())-year(a.csrq)>y
+
+--7求选修某课程的学生人数多于3人的这门课的课程名
+select kcm 课程号 from kc as a,
+(select cj.kcdh 课程号,count(*) 选课人数 from kc 
+join cj on cj.kcdh=kc.kcdh --左连接会出现未知课程号 
+group by cj.kcdh 
+having count(*)>3) as b
+where a.kcdh=b.课程号
+
+--8求选修了课程01001或选修了课程02002的学生学号
+select distinct xh 学号 from cj
+where kcdh='001' or kcdh = '002'
+
+--9求选修了课程，但未选修课程02003的学生的姓名、学号
+
+select xh,xm from xs    --可能有一些没有选修课程的全都查出来了//137个
+where not exists(select * from cj where xs.xh=cj.xh
+and kcdh='003')
+
+select distinct cj.xh,xm from xs (right)  join cj on xs.xh=cj.xh   --求选修了课程，但未选修课程//29个
+where not exists(select * from cj where xs.xh=cj.xh
+and kcdh='003')
+
+select xm,cj.xh from cj,xs
+where cj.xh=xs.xh
+except
+select xm,cj.xh from cj,xs
+where cj.xh=xs.xh and kcdh='003'
+
+select distinct xm 姓名,xs.xh 学号 from xs right join cj on xs.xh=cj.xh 
+where cj.xh not in(select xh from cj where kcdh='003')--子查询
+
+
+--10求成绩比所选修课程平均成绩高的学生的学号和成绩 
+select xh 学号,cj 成绩,a.kcdh 课程号 from cj as a,
+(select avg(cj) as 平均成绩,kcdh  from cj group by kcdh) as b
+where a.cj>b.平均成绩 and a.kcdh=b.kcdh
+
+select xh,cj from cj as a
+where cj>(select avg(cj) from cj
+	where a.kcdh=kcdh)   ---相关子查询

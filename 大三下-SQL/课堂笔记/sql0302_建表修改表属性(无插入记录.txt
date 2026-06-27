@@ -1,0 +1,176 @@
+create database test --建数据库
+
+use test --或者使用数据库命令‘use ***’
+create table hfy(sno int,sname varchar(10)) --建表命令
+--建在test里面时，注意左上角数据库选择
+
+drop table hfy --删除表
+
+--主键唯一且不为空
+create table stu(
+sno int primary key,  --主键/也可以写在最后，语句改变
+sname varchar(10) not null, --非空
+sex char(4) default '男' 
+check (sex='男' or sex='女')
+--第二种in：check (sex in('男','女'))
+--不输入时默认值为男，也可以自行更改
+)
+
+/*create table stu(
+sno int,
+sname varchar(10) not null, --非空
+sex char(4) default '男' 
+check (sex='男' or sex='女')
+primary key(sno)
+)*/
+
+--drop table stu
+
+create table cj(
+sno int,
+cno int,
+cj int
+ primary key(sno,cno)  --多个主键
+ foreign key(sno) references stu(sno)  --外键，本表的sno参考stu表的sno字段
+)
+
+--drop table cj
+
+
+--删除约束（外键删除）
+exec sp_helpconstraint cj
+
+alter table cj
+drop constraint FK__cj__cj__5165187F
+
+
+--删除约束//注意有外键引用时，先将外键删除
+exec sp_helpconstraint stu --学生表上面所有的约束和相关的信息
+
+alter table stu
+drop constraint PK__stu__DDDF644649C3F6B7
+
+
+USE test
+GO
+CREATE TABLE stud_info
+(
+学号 char(8) PRIMARY KEY,
+姓名 char(10) NOT NULL,
+性别 char(2) DEFAULT '男',
+出生年月 datetime,
+籍贯  varchar(20),
+家庭住址 varchar(60),
+电话 char(15),
+所属班级 char(8)
+)
+
+
+create table test(
+sno int identity(1,1),  --标识列数值由系统自动提供//一定可以成为主键
+a int,
+b int,
+c as a+b   --系统自动计算赋值
+)
+
+--select * from test
+
+
+alter table test
+add sex char(1) --修改表添加字段
+
+
+alter table test
+drop column sex --删除列
+
+
+--练习1
+create table 学生表(
+学号 int PRIMARY KEY,  
+姓名 char(5),
+性别 char(2),  
+)
+
+create table 选课表(
+学号 int,  
+课程号 int,
+成绩 int
+ primary key(学号,课程号)  --多个主键
+ foreign key(学号) references 学生表(学号)
+)
+
+alter table 选课表
+add check (成绩>=0 and 成绩<=100) --添加约束
+
+create table test(
+cj varchar(12) 
+)
+alter table test 
+add check(cj>=0 and cj<=100)
+--第二种添加约束方法
+--alter table test 
+--add constraint cj_check check(cj>=0 and cj<=100)
+
+----作业
+create database student
+on
+(name= students_data,size=5mb,filename='D:\data\students_data.mdf',filegrowth=1mb)
+log on
+(name= students_log,size=2mb,filename='D:\data\students_log.ldf',filegrowth=10%)
+
+create table student(
+sno char(7) primary key,
+sname char(10) not null,
+sex char(2) check (sex in('男','女')),
+sage int check (sage >=15 and sage <=45),
+sdept varchar(20) default'计算机',
+sid char(10) unique,
+sdate datetime default getdate()
+)
+
+create table course(
+cno char(7) primary key,
+cname char(10) not null,
+credit int check (credit>0),
+semester int
+)
+
+create table sc(
+cno char(7), --要和前面相应位数
+sno char(7),
+grade int  check (grade>=0 and grade<=100 )
+primary key(sno,cno)  --多个主键
+ foreign key(sno) references student(sno), 
+ foreign key(cno) references course(cno) 
+)
+
+create table teacher(
+tno char(8) not null,
+tname char(10) not null,
+salary decimal(4,2)
+)
+
+alter table teacher 
+add  title nchar(4)
+
+alter table teacher 
+add check(title in ('教授','副教授','讲师'))
+
+
+exec sp_helpconstraint student
+
+alter table student 
+drop constraint UQ__student__DDDFDD375812160E
+alter table student 
+drop column sid
+
+
+alter table student 
+drop constraint DF__student__sdate__5CD6CB2B
+alter table student 
+drop column sdate
+
+
+
+alter table teacher
+add primary key(tno)

@@ -1,0 +1,47 @@
+create table test(
+cj varchar(12) 
+)
+alter table test 
+add check(cj>=0 and cj<=100)
+--alter table test 
+--add constraint cj_check check(cj>=0 and cj<=100)
+
+--上述为字符串类型，在约束中将此字符串转化为数值类型
+insert into test(cj) values(10) --插入数据
+
+--要先删除约束
+exec sp_helpconstraint test
+alter table test drop constraint CK__test__cj__119F9925 
+
+alter table test 
+alter column cj int --修改已经建好的表的属性
+
+alter table test add name varchar(10)
+alter table test drop column name
+
+--------------------------------------------------------------
+--查询学号和年龄
+select xh 学号,year(getdate())-year(csrq)年龄 from xs
+
+--查询有选修课程的学号
+select distinct xh from cj 
+
+select xm  from xs
+where xb='男' and year(getdate())-year(csrq)>=40
+
+select * from   kc
+where  kcm
+like 'sql\_%v__'escape '\'  --以”sql_”开头，且倒数第3个字符为v的课程
+--例如'Visual\ %' 可以找到Visual+空格+任意字符
+
+select * from xs
+order by zy,year(getdate())-year(csrq) desc --所在专业升序排列，对同一专业中的学生按年龄降序排列
+
+select count(*) from xs
+where xm like '陈%'  --姓陈的学生有几个
+
+select avg(cj) from test --avg会忽略null的，除掉的时候不是除全部
+
+select kcdh,max(cj)
+from cj 
+group by kcdh  --分组求每个课程的最高分

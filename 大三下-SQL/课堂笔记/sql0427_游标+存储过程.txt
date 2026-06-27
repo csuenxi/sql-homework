@@ -1,0 +1,209 @@
+(1)定义一个游标，将学生表中性别是女的学生的学号和姓名显示出来         --测试：
+
+(2)通过游标将cj表中第2条记录的学生的成绩减少5分
+  
+(3)定义一个游标，将删除xs表中所有性别是"女"的学生
+(4)建立一个游标，显示每个学生的姓名以及选修的课程总数
+-----------------------------------------1
+declare @xh char(10),@xm char(10)
+declare yb cursor
+for select xh,xm from xs where xb='女'
+open yb
+fetch next from yb into @xh,@xm
+
+while @@fetch_status=0 
+begin
+print @xh+@xm
+fetch next from yb into @xh,@xm
+end
+------------------------------------2
+declare yb scroll cursor for    --指针随意移动scroll cursor，才可以有first等
+select * from  cj
+
+open yb
+begin
+	fetch absolute 2 from yb   --fetch first//absolute *
+	while @@fetch_status=0   --if @@fetch_status=0
+	update cj set cj=cj-5 
+	where current of yb    --注意修改游标所指的地方
+end
+close yb
+deallocate yb
+-------------------------------------3demo
+declare
+	@xh char,
+	@xm char,
+	@xb char,
+	@csrq char(10),
+	@zy char(10)
+declare yb cursor
+for select * from xs where xb='女'
+
+open yb
+fetch next from yb   --加上into，就不会有显示，否则会有一行行执行出来
+into @xh,@xm,@xb,@csrq,@zy
+while @@fetch_status=0 
+begin
+  if @xb='女'
+  delete from cj where current of yb
+ fetch next from yb   --加上into，就不会有显示，否则会有一行行执行出来
+ into @xh,@xm,@xb,@csrq,@zy
+end
+close yb
+deallocate yb
+--------------------------------3修改
+declare yb cursor
+for select * from xs where xb='女'
+
+open yb
+fetch next from yb   --加上into，就不会有显示，否则会有一行行执行出来
+while @@fetch_status=0 
+begin
+  delete from xs where current of yb
+ fetch next from yb   --加上into，就不会有显示，否则会有一行行执行出来
+
+end
+close yb
+deallocate yb
+-------------------------------4
+declare @xm varchar(10),@xm1 varchar(10) --定义姓名1，如果和游标所指的不同，重新计数
+declare @kcdh varchar(10)
+declare @sum int,@sum1 int
+set @sum=0
+set @sum1=0
+
+declare yb cursor    --赋值游标信息，每一个学生的选课情况
+for select xm,kcdh 
+           from cj,xs 
+           where cj.xh=xs.xh      
+open yb
+fetch next from yb into @xm,@kcdh
+
+set @xm1=@xm
+while @@fetch_status=0  --当游标有存储信息时
+begin 
+  print '姓名:'+@xm
+  set @sum1=@sum1+1
+  set @sum=@sum+1
+  fetch next from yb into @xm,@kcdh  --移动游标
+  if(@xm!=@xm1)   --当姓名不同时，重新计数门数
+	begin
+	print @xm1+'选课门数:'+str(@sum)             --convert(char(10), @sum) //cast(@sum as varchar(10))
+    	set @xm1=@xm
+	set @sum=0
+	end
+end
+print @xm1+'选课门数:'+cast(@sum as varchar(10))
+
+close yb   
+deallocate yb    
+print '总选课门数:'+cast(@sum1 as varchar(10))
+-------------------------------------------------------------------存储过程
+exec sp_helpconstraint xs   --看有约束的列
+create proc 存储过程名(@参数名 参数属性,@参数名 参数属性 output)
+as 
+begin
+*****
+end
+
+create or alter proc allxs  --prco全写：procedure
+as
+	select * from xs
+
+exec allxs
+drop proc allxs
+--------------------------例子：
+create or alter proc pr
+(@zy char(10)='',@num int output)
+as
+	if @zy=''
+	begin
+		print '输入'
+		return 1
+	end
+select @num=count(*) from xs where zy=@zy
+	if @num =0
+	begin
+		print '专业错误！'
+		return 2
+	end
+return 0
+
+declare @i int,@j int
+exec pr '自动控制',@i output --exec pr @zy='自动控制',@num=@i output
+print @i
+
+select * from xs
+-----------------------------------测试2
+(1)编写一个存储过程，能根据学生名字统计出该学生的选课情况（姓名，选修的课程编号及选修的门数）
+
+
+(2)创建查询每个学生的选修课总成绩的存储过程，要求列出学号和总成绩
+
+(3)创建修改指定学号、课程号的学生成绩的存储过程。输入参数为：学号，课程号和修改后的成绩，修改后的成绩默认值是60分
+（4）创建计算1+2+...+n的存储过程，n有输入参数决定
+-------------------------------------1
+create or alter proc pr
+(@xm char(10))
+as
+begin 
+	declare @sname char(10),@kcdh char(10),@sum int=0
+	declare getsum cursor for
+		select xm,kcdh from xs,cj where xs.xh=cj.xh and xm=@xm
+	open getsum
+	fetch next from getsum into @sname,@kcdh
+	while(@@FETCH_STATUS=0)
+	begin
+	    set @sum=@sum+1
+		print @sname+@kcdh
+		fetch next from getsum into @sname,@kcdh
+	end
+	close getsum
+	deallocate getsum
+	print str(@sum)
+end
+exec pr '邵海荣'
+-------------------------------2
+create or alter proc pr1
+as	
+	declare yb  cursor  
+	for
+	select xh,sum(cj) from cj group by xh
+open yb
+declare @xh int,@zcj int
+fetch next from yb into @xh,@zcj
+while @@fetch_status=0 
+begin
+--declare @xh int,@zcj int
+print '学号：'+str(@xh)+'   总成绩'+str(@zcj)
+fetch next from yb into @xh,@zcj
+end
+close yb
+deallocate yb
+
+exec pr1
+----------------------------3
+create or alter proc pr1
+(@xh int,@kcdh int,@cj int=60)
+as	
+begin
+	update cj
+	set cj=@cj where xh=@xh and kcdh=@kcdh
+end
+
+exec pr1 002901,001
+-------------------------4
+create or alter proc pr
+(@n int)
+as	
+begin 
+ declare @sum int=0,@i int=0
+while @i<@n
+begin
+set @i=@i+1
+set @sum=@sum+@i
+end
+print @sum
+end
+
+exec pr 10

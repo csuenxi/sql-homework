@@ -1,0 +1,119 @@
+--   >any(select *****)==some （大于某一个）== >(select min(***))
+--  >all(select *****) （大于最大的）== >(select max(***))
+
+select xm from xs
+where exists(
+	select * from cj
+		where cj.xh=xs.xh and kcdh='002')
+--exists相关子查询
+
+select xm 姓名,xh 学号 from xs 
+where xb='男'and year(GETDATE())-year(csrq) >
+any (select (year(GETDATE())-year(csrq)) from xs
+where xb='女')  --some表示某一个  （min）
+
+select xm from xs
+where exists(
+	select * from cj
+		where cj.xh=xs.xh and kcdh='002')
+--相关子查询
+-------------------------------------------------------------
+
+
+--3
+select xm,xb from xs
+where zy='自动控制' and xh in 
+(select xh from cj where kcdh='002')
+
+select * from kc
+
+--4选择了 '管理信息系统' 课的人数
+select xm,xh from xs
+where exists(
+	select * from cj
+	where exists(
+		select * from kc 
+		where kcdh=cj.kcdh and kcm='管理信息系统')
+	and xh=xs.xh)
+
+--5
+select count(kcdh),avg(cj) from cj
+where xh in (select xh from cj join kc on kc.kcdh=cj.kcdh
+where kcm='管理信息系统')
+group by xh
+
+
+--6
+select xs.xh,xm,cj from cj join xs on xs.xh=cj.xh
+where kcdh =(select kcdh from kc where kcm='管理信息系统')
+
+--7
+select xh,cj from cj
+where cj>(select avg(cj) from cj where kcdh='004') 
+and kcdh='004'
+
+--8
+select xm,year(GETDATE())-year(csrq) from xs
+where year(GETDATE())-year(csrq)=
+(select max(year(GETDATE())-year(csrq)) from xs
+where zy='自动控制' )
+
+select top 1 xm,year(GETDATE())-year(csrq) from xs
+where zy='自动控制' 
+order by year(GETDATE())-year(csrq) desc
+
+--9
+select xh,avg(cj) from cj
+where avg(cj)>(select avg(cj) from cj) --错的！！！
+group by xh
+
+select xh,avg(cj)
+from cj
+group by xh
+having avg(cj)>(select avg(cj) from cj)
+
+--10
+select xm,zy from xs
+where xh not in (select xh from cj where kcdh='001') 
+
+select xm,zy from xs
+except 
+select xm,zy from xs join cj on xs.xh=cj.xh where kcdh='001'
+
+select xm,zy from xs
+where not exists (select * from cj 
+					where xs.xh=cj.xh and kcdh='001')
+-----------------------------------------------------------------
+11、查询计算机系没有选修VB课程的学生的姓名和性别
+12、查询选了002课程的学生的姓名
+13、查询选了VB课程的学生的姓名和专业
+14、查询没选C001号课程的学生的姓名和所在系
+
+--11
+select xm,xb from xs
+where zy='计算机及应用' and xh not in 
+(select xh from cj where kcdh=
+	(select kcdh from kc where kcm ='管理信息系统')) 
+
+select xm,xb from xs
+where zy='计算机及应用' and xh not in 
+(select xh from cj join kc on kc.kcdh=cj.kcdh where kcm ='管理信息系统') 
+
+select xm,xb from xs
+where zy='计算机及应用' and not exists (select * from cj join kc on kc.kcdh=cj.kcdh  
+					where xs.xh=cj.xh and kcm ='管理信息系统')
+
+--12
+select xm from xs
+where xh in(select xh from cj where kcdh='002')
+
+--13
+select xm,zy from xs
+where xh in(select xh from cj where kcdh=
+	(select kcdh from kc where kcm='管理信息系统'))
+
+--14==10
+select xm,zy from xs
+where xh not in(
+select xh from cj where kcdh='001')
+

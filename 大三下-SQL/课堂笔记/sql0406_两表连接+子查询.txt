@@ -1,0 +1,115 @@
+求成绩高于所有课程平均成绩的学号
+求每门课成绩最高的学号
+求成绩高于本门课程平均成绩的学号
+求每门课程的平均成绩和总成绩
+求所有未选课程的学生的学号和姓名
+--1
+select distinct xh from cj
+where cj>all(select avg(cj) from cj)
+--2
+select a.xh from cj as a, 
+(select max(cj) as m,kcdh from cj
+group by kcdh )as b 
+where a.cj=b.m and a.kcdh=b.kcdh  --两表连接
+
+select xh from cj as a
+where cj=(select max(cj) from cj where a.kcdh=kcdh)  --相关子查询
+--3
+select xh,cj from cj as a
+where cj>(select avg(cj) from cj
+	where a.kcdh=kcdh)
+--4
+select avg(cj),sum(cj) from cj
+group by kcdh
+--5
+select xs.xh,xm from cj right join xs on xs.xh=cj.xh
+group by xs.xh,xm
+having count(kcdh)=0
+
+select xh,xm from xs
+where not exists (select * from cj where cj.xh=xs.xh)
+-----------------------------------------------------------------------
+1)求计算机系学生选课的课程号和成绩。
+2)求选修了高等数学的学生学号和姓名。（两种方法：连接查询和子查询）
+3)求选修成绩在90~95之间的课程名。（两种方法：连接查询和子查询）
+4)针对C1课程，查询C1课程的成绩高于张三的学生学号和成绩。
+5)求其他系中比计算机系某学生年龄小的学生
+6)求其他系中比计算机系学生年龄都小的学生。
+7)求没有选修C2课程的学生姓名。
+8)查询选修了“c1”课程但没有选修“c2”课程的学生学号。
+9)查询选修了全部课程的学生姓名。
+--1
+select kcdh,cj from cj 
+join xs on cj.xh=xs.xh
+where zy='自动控制'
+
+--2
+select cj.xh,xm,kcm from cj   --1
+join xs on cj.xh=xs.xh
+join kc on kc.kcdh=cj.kcdh
+where kcm='数据结构'
+
+select xh,xm from xs             --2
+where xh in (select xh from cj where kcdh =(
+select kcdh from kc where kcm='数据结构'))
+
+--3
+select kcm from kc                     --1
+where kcdh in (select kcdh from cj  where cj>=90 and cj<=95)
+
+select distinct kcm from kc join cj on cj.kcdh=kc.kcdh             --2
+where cj>=90 and cj<=95
+
+--4
+select xh,cj from cj
+where kcdh=001
+and cj>(select cj from cj join xs on xs.xh=cj.xh 
+		where xm='高森林' and kcdh=001)
+
+--5
+select * from xs
+where zy!='信息管理与信息系统'
+and year(getdate())-year(csrq)<(
+select max(year(getdate())-year(csrq)) from xs
+where zy='信息管理与信息系统')
+
+--6
+select * from xs
+where zy!='信息管理与信息系统'
+and year(getdate())-year(csrq)<(
+select min(year(getdate())-year(csrq)) from xs
+where zy='信息管理与信息系统')
+
+--7
+select xm from xs
+where xh not in(select xh from cj where kcdh='002')
+
+--8
+select xm from xs join cj on cj.xh=xs.xh
+where xs.xh not in(select xh from cj where kcdh='002')
+and kcdh=001
+
+--9*****难点
+select xm from xs             --1
+where xh in (select xh from cj 
+	group by xh having count(kcdh)=(
+	select count(kcdh) from kc ))
+
+select xm from xs where not exists( --2
+select * from kc where not exists(
+select * from cj where kcdh=kc.kcdh and xh=xs.xh))
+
+
+xs：
+xh       xm
+9501   aa
+
+kc:
+kcdh   kcm
+001     vb
+002     数据结构
+
+cj：
+xh       kcdh   cj
+9501   001   100
+9502   002    95

@@ -1,0 +1,151 @@
+select xm from xs
+where xm like '欧阳_'
+
+select xm from xs
+where xm like '_阳_'
+
+select xm,xh,xb from xs
+where xm not like '刘%'  --%是通配符
+--方法二
+select xm,xh,xb from xs
+except
+select xm,xh,xb from xs
+where xm like '刘%'
+
+select kcdh,xf,kcm from kc
+where kcm like '%DB\_Design%' --下划线是通配符，要转换
+escape '\'  --要再定义一个符号，使得它下一个符号是原来的本意'_'，不具备_代表一个字符的意思
+
+select * from kc
+where kcm like 'DB\_%' escape '\' 
+and kcm like '%i__'
+--第二种：where kcm like 'DB\_%i__' escape '\' 
+
+--查询缺少成绩的学生学号和课程代号
+select xh,kcdh from cj
+where cj is null --'不能用= null要用is'
+
+select xh,kcdh from cj
+where cj is not null
+
+select xh,cj from cj
+where kcdh='003'
+order by cj desc
+--查询全体学生情况，查询结果按照所在专业专业号排序，同一系按年龄降序
+select * from xs 
+order by zy asc,year(GETDATE())-year(csrq) desc 
+--学生总人数
+select count(xh) from xs
+--group by xb
+
+select count(distinct xh) from cj
+
+select avg(cj) from cj
+where kcdh='001' 
+
+select max(cj) from cj
+where kcdh='001'
+
+--求各个课程号及相应的选课人数
+select count(xh) from cj
+group by kcdh
+
+--选修了三门以上课程的学生学号
+select xh,count(kcdh) from cj
+group by xh
+having count(kcdh)>3
+
+select xh,avg(cj) from cj
+group by xh
+having avg(cj)>=90
+----------------------------------------
+--测试1
+--1 有一些表里没有，名字自己更改了
+select xm,kcdh,cj from cj join xs on cj.xh=xs.xh
+where zy='计算机'
+--2
+select xm,kcm,cj from cj join xs on cj.xh=xs.xh 
+join kc on kc.kcdh=cj.kcdh
+where zy='信息管理系' and kcm='计算机文化'
+--3
+select xm,zy from xs
+where zy=(select zy from xs where xm='陈小明')
+--4
+select kcm,kss from kc
+where kss=(select kss from kc where kcm='数据结构')
+--5
+select * from xs left join cj on cj.xh=xs.xh
+--6
+select kcm from kc left join cj on cj.kcdh=kc.kcdh
+where cj is null
+--7
+select count(kcdh) from xs left join cj on xs.xh=cj.xh
+where zy='应用电子技术'
+group by xs.xh
+--8
+select top 3 xm,year(GETDATE())-year(csrq),zy from xs
+order by year(GETDATE())-year(csrq) desc
+------------------------------------------------------
+select xm,kcdh,cj from cj join xs on cj.xh=xs.xh
+where zy='计算机'
+--2
+select xm,kcm,cj from cj join xs on cj.xh=xs.xh 
+join kc on kc.kcdh=cj.kcdh
+where zy='信息管理系' and kcm='计算机文化'
+--3
+select xm,zy from xs
+where zy=(select zy from xs where xm='陈小明') --子查询
+
+select a.xm,a.zy from xs as a,xs as b --多表连接(自连接)
+where a.zy=b.zy and b.xm='陈小明'-- and a.xm!= '陈小明' 
+--4
+select kcm,kss from kc
+where kss=(select kss from kc where kcm='数据结构')
+
+select a.kcm,a.kss from kc as a,kc as b
+where a.kss=b.kss and b.kcm='数据结构'
+--5
+select * from xs left join cj on cj.xh=xs.xh
+--6
+select kcm from kc left join cj on cj.kcdh=kc.kcdh
+where cj is null
+
+select kcm from kc left join cj on cj.kcdh=kc.kcdh
+group by kcm
+having count(xh)=0
+--7  count(*)不可以，因为如果用*，会出现一行，会统计出1，但是值应该为0，因此应该为count(kcdh)
+--count(*)不计null
+select count(kcdh) from xs left join cj on xs.xh=cj.xh
+where zy='应用电子技术'
+group by xs.xh
+--8 并列时，加上with ties
+select top 3 with ties xm,year(GETDATE())-year(csrq),zy from xs
+order by year(GETDATE())-year(csrq) desc
+-----------------------------------------
+--9 
+select top 2 with ties cj.xh,count(kcdh),avg(cj)
+from cj join xs on cj.xh=cj.xh
+where zy='应用电子技术'
+group by cj.xh
+having count(kcdh)>2
+order by avg(cj) desc
+
+--10
+select xh,case
+	when cj>=90 then'优'
+	when cj between 80 and 90 then '良'
+	when  cj<80 then '及格'
+	end as 成绩
+	from cj
+	where kcdh='001'
+
+select xs.xh,count(kcdh) 选课门数,case
+	when count(kcdh)>4 then '多'
+	when count(kcdh) between 2 and 4 then '一般'
+	when  count(kcdh) between 1 and 2 then '少'
+	when  count(kcdh) is null then '未选'
+	end as 选课情况
+	from cj right join xs on cj.xh=xs.xh
+	where zy='应用电子技术'
+	group by xs.xh
+	order by count(kcdh) desc

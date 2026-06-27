@@ -1,0 +1,189 @@
+select xm,zy,year(getdate())-year(csrq) from xs as a
+where year(getdate())-year(csrq)=
+(select max(year(getdate())-year(csrq)) from xs
+where a.zy=zy)
+----------------------------------------------------测试
+1查询课程编号为“01”的课程比“02”的课程成绩高的所有学生的学号
+
+2 查询平均成绩大于60分的学生的学号和平均成绩
+  
+3 查询所有学生的学号、姓名、选课数、总成绩
+
+4查询没学过“操作系统”课程的学生的学号、姓名
+  
+5 查询学习过课程001并且也学习过课程002的学生的学号、姓名
+  
+6 查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+ 
+7 查询任何一门课程成绩在70分以上的姓名、课程名称和分数
+
+8 查询选修了全部课程的学生信息
+
+9 查询两门以上不及格课程的同学的学号及其平均成绩
+--1
+select a.xh from cj as a,                   --方法1
+(select xh,cj,kcdh from cj) as b
+where a.xh=b.xh and a.cj>b.cj 
+and a.kcdh=001 and b.kcdh=002
+
+select xh from cj as a where kcdh=001    --方法2
+and cj>(select cj from cj where kcdh=002 and xh=a.xh)
+--2
+select xh,avg(cj) from cj
+group by xh
+having avg(cj)>60
+--3
+select cj.xh,xm,count(kcdh),sum(cj) from cj 
+join xs on xs.xh=cj.xh
+group by cj.xh,xm
+--4
+select distinct cj.xh,xm from cj join xs on xs.xh=cj.xh
+where cj.xh not in(
+select xh from cj where 
+kcdh=(select kcdh from kc where kcm='数据结构'))
+--5
+select cj.xh,xm from cj join xs on xs.xh=cj.xh
+where kcdh=001
+intersect                                                             --intersect***
+select cj.xh,xm from cj join xs on xs.xh=cj.xh
+where kcdh=002
+--6
+select cj.xh,xm,avg(cj) from cj join xs on xs.xh=cj.xh
+where cj<60
+group by cj.xh,xm
+having count(kcdh)>=2
+--7
+select xm,kcm,cj from cj join xs on xs.xh=cj.xh
+join kc on kc.kcdh=cj.kcdh
+where cj>70
+--8
+select xm from xs where not exists( 
+select * from kc where not exists(
+select * from cj where kcdh=kc.kcdh and xh=xs.xh))
+--9
+select cj.xh,avg(cj) from cj join xs on xs.xh=cj.xh
+where cj<60
+group by cj.xh
+having count(kcdh)>=2
+------------------------------------------------------
+--视图
+create view v_employees11  --创建视图
+as 
+select xh,xm,xb,csrq from xs
+
+select * from v_employees11  --查找视图内容
+
+insert into v_employees11(xh,xm)
+values('9501','aaa')                   --视图插入数据**插入表格同理
+
+update xs 
+set xm='bbb' where xh='9501'  --更新基表，视图数据也会变
+
+update v_employees11    
+set xb='女' where xh='9501'   --修改视图
+
+
+create view v_employees12
+as 
+select cj.xh,xm,cj 
+	from xs,cj
+	where xs.xh=cj.xh
+
+update v_employees12    
+set cj=cj+5 where xh='9501'   --更新视图成绩
+
+--delete from v_employees12  where  xh='9501' 
+--不可以删除有连接两个表的行（创建在多张表上时，不可以）
+
+--加密：with encryption(视图右键设计不可以点//看不到具体的列属性)
+create view v_employees11  with encryption   --加密
+as 
+select xh,xm,xb,csrq from xs
+
+create view v_employees14     --保证所有的视图修改的要符合约束条件
+as
+select xh,xm,xb,csrq from xs
+where xm like '王%' with check option 
+
+--insert into v_employees14(xh,xm,xb)
+--values(9502,'林汉洲','男')  --有with check option ，插入不符合要求
+
+create view v_employees16
+as
+select xm,cj.xh,count(kcdh) 选课门数,avg(cj) 平均分        --创建视图有聚合函数 要有别名
+from xs join cj on cj.xh=xs.xh 
+group by cj.xh,xm
+
+--select * from v_employees16
+
+--不可以修改，包含了聚合函数（修改的是在基表，聚合函数在基表中找不到列）
+--update v_employees16 set 平均分=平均分+5 where xh='010703'
+
+
+---------------------------------------
+create index idxsname     --在student表上为sname列建立一个聚集索引，名为idxsname
+on student(sname)
+
+create unique index idxcn   --在course表上为cname列建立一个唯一的非聚集索引，索引名为idxcn
+on course(cname)
+
+create clustered index idxsnocno  --在sc表上为sno,cno建立一个组合的聚集索引，索引名为idxsnocno
+on sc(sno,cno)
+
+drop index sname.idxsno   --删除sname列上建立的idxsno索引
+----------------------------------------
+写出创建满足下述要求的视图的SQL语句，并执行所写代码
+1、查询学生的学号，姓名，所在系，课程号，课程名，课程学分
+2、查询学生的学号、姓名、选修的课程名和考试成绩
+3、统计每个学生的选课门数，要求列出学号和选课门数
+4、统计每个学生的选课总学分，列出学号和总学分（考试成绩大于60分才可以获取该门课程学分）
+create view st1    
+as
+select SC.sno,sname,sdept,cname
+from student,SC,course where SC.sno=student.sno
+and course.cno=SC.cno
+
+create view st2
+as
+select SC.sno,sname,cno,grade
+from student,SC where SC.sno=student.sno
+
+create view st3
+as
+select count(cno) 选课门数,sno
+from SC
+group by sno
+
+create view st4
+as
+select sno,sum(SC.credit) 总学分 from SC
+where grade>60
+group by sno
+----------------------------------------
+利用以上创建的视图，完成如下查询：
+1、查询考试成绩大于等于90的姓名、课程名和成绩
+2、查询选课门数超过3门的学号和选课门数
+3、查询计算机系选课门数超过3门的学生的姓名和选课门数
+4、查选课总学分超过10分的学生的学号、姓名、所在系和选课总分
+5、查询年龄大于等于20岁的学生中，选课总分超过10分的学生的姓名、年龄、所在系和选课总分
+select sname,cname,grade from st2 --1
+where grade>=90
+
+select xh,count(cno) from st1        --2
+group by sno 
+having count(cno)>3
+
+select sname,count(cno) from st1  --3
+where sdept='计算机' 
+group by sno
+having count(cno)>3 
+
+select sno,sname,sdept,count(credit) from st1  --4
+group by sno
+having count(credit)>10
+
+select st4.sno,总学分 from st4,student       --4
+where st4.sno=student.sno where 总学分>10
+
+select st4.sno,sdept,总学分 from st4,student
+where st4.sno=student.sno and sage>=20   --5

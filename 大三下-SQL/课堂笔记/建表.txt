@@ -1,0 +1,32 @@
+建表程序：
+create table student(
+sno char(7)  primary key,
+sname char(10) not null,
+sex char(2) check (sex in ('男','女')),
+sage int check(sage between 15 and 45),
+sdept char(20) default '计算机系',
+sid char(10) unique,
+sdate datetime default getdate()
+)
+
+create table course(
+cno char(7)  primary key,
+cname char(10) not null,
+credit int check (credit >0),
+semester int 
+)
+
+create table SC(
+cno char(7) ,
+sno char(7) ,
+grade int check(grade between 0 and 100),
+primary key(cno,sno),
+foreign key (sno) references student(sno),
+foreign key (cno) references course(cno)
+)
+
+create table Teacher(
+tno char(8) not null,
+tname char(10) not null ,
+salary decimal(4,2) 
+)
