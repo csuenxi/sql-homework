@@ -1,0 +1,81 @@
+--1求学生学号以及其选修课程的课程号和成绩
+select xh 学号,kcdh 课程号,cj 成绩 from cj
+
+--2求选修了课程01001且成绩在70分以下或90分以上的学生的姓名、课程名称和成绩
+select xm 姓名,kcm 课程名,cj 成绩 from xs,kc,cj
+where xs.xh=cj.xh and kc.kcdh=cj.kcdh
+and cj.kcdh='01001' and (cj>90 or cj<70)--有两个kcdh，要标注是哪张表里的
+
+
+--3（不相关子查询）求年龄大于“王红”的所有学生的学号、姓名和年龄
+select xh 学号,xm 姓名,year(GETDATE())-year(csrq) 年龄 from xs 
+where year(GETDATE())-year(csrq) > 
+(select year(GETDATE())-year(csrq) from xs
+where xm='王红')
+
+--4求与“张维明”年龄相同的学生的姓名和出生日期
+select xm 姓名,year(GETDATE())-year(csrq) 出生日期 from xs 
+where year(GETDATE())-year(csrq) =
+(select year(GETDATE())-year(csrq) from xs
+where xm='张维明')
+
+--5求比某一女生年龄大的男生的姓名和学号
+select xm 姓名,xh 学号 from xs 
+where xb='男'and year(GETDATE())-year(csrq) >
+some (select (year(GETDATE())-year(csrq)) from xs
+where xb='女')  --some表示某一个  （min）/any
+
+--6求比全体女生年龄大的男生的姓名和学号
+select xm 姓名,xh 学号 from xs 
+where xb='男'and year(GETDATE())-year(csrq) >
+all(select (year(GETDATE())-year(csrq)) from xs
+where xb='女')  --all表示任意一个  (max)
+
+--7求选修某课程的学生人数多于3人的这门课的课程名
+select kcm from kc where kcdh in
+(select kcdh from cj group by kcdh
+having count(*)>3 )
+
+select kcm 课程号 from kc as a,
+	(select kcdh 课程号 from cj  
+	group by kcdh 
+	having count(*)>3) as b
+where a.kcdh=b.课程号
+
+Select kcm from cj,kc 
+where cj.kcdh=kc.kcdh  
+group by cj.kcdh,kcm having count(*)>3 --先按照kcdh分组，再按照kcm分组   
+
+--8求选修了课程01001或选修了课程02002的学生学号
+select xh 学号 from cj
+where kcdh='01001' or kcdh = '01002'
+
+select xh 学号 from cj
+where kcdh in('01001','01002')
+
+select xh from cj where kcdh='01001'
+union 
+select xh from cj where kcdh='02002'
+
+--9求选修了课程，但未选修课程02003的学生的姓名、学号
+select distinct xm,cj.xh from cj,xs
+where cj.xh=xs.xh and kcdh!='02003' --!!错误的
+
+select distinct xm,cj.xh from cj,xs
+where cj.xh=xs.xh
+except   --用except
+select distinct xm,cj.xh from cj,xs
+where cj.xh=xs.xh and kcdh='001'
+
+select xh from cj
+where xh not in(select xh from cj where kcdh='003')
+
+--10求成绩比所选修课程平均成绩高的学生的学号和成绩 
+select xh 学号,cj 成绩 from cj as a,
+(select avg(cj) as 平均成绩,kcdh from cj group by kcdh) as b
+where a.cj>b.平均成绩 and a.kcdh=b.kcdh
+
+
+select xh,cj from cj as a
+where cj>(select avg(cj) from cj
+	where a.kcdh=kcdh)   ---相关子查询

@@ -1,0 +1,99 @@
+(1)查询每个学生及其选课的详细信息
+select * from cj,xs where cj.xh=xs.xh
+
+(2)查询计算机系学生的选课情况，列出学生的名字、所选课程的课程号和考试成绩
+select xm,kcdh,cj from cj,xs
+where cj.xh=xs.xh and zy = '计算机'
+
+(3)查询信息管理系选了计算机文化学课程的学生信息，列出学生姓名、课程名和成绩
+select  xm,kcm,cj from xs join cj on xs.xh=cj.xh
+join kc on kc.kcdh =cj.kcdh
+where  zy = '信息管理系 ' and kcm='计算机文化学'
+
+(4)查询所有选了VB课程的学生姓名和所在系
+select xm,zy from xs join cj on xs.xh=cj.xh
+join kc on kc.kcdh =cj.kcdh
+where kcm='VB'
+
+
+(5)统计每个系的学生的考试平均成绩
+select zy,AVG(cj) from xs join cj on xs.xh=cj.xh
+group by zy
+
+(6)统计计算机系学生中每门课程的选课人数、平均成绩、最高成绩和最低成绩
+select kcdh,COUNT(*) 人数,AVG(cj) 平均,MAX(cj) 最大,MIN(cj) 最小 
+from xs join cj on xs.xh=cj.xh
+where zy='计算机'
+group by kcdh
+
+
+(7)查询与刘晨在同一个系学习的学生姓名和所在系
+select distinct xm,zy  from xs join cj on xs.xh=cj.xh
+where zy =
+(select zy from xs where xm='邵海荣') and xm !='邵海荣'
+
+
+(8)查询与“数据结构”课程在同一个学期开设的课程的课程名和开课学期
+select kcm,xf from kc 
+where xf=
+(select xf from kc where kcm= '数据结构')
+
+
+(9)查询全体学生的选课情况，包括选了课的学生和没有选课的学生。
+select * from xs left join cj on cj.xh=xs.xh
+
+
+(10)查询没有人选的课程的课程名
+select kcm,xs.xh from xs right join cj on cj.xh=xs.xh
+right join kc on kc.kcdh=cj.kcdh
+where cj.xh is null
+
+(11)查询计算机系没有选课的学生，列出学生的姓名和性别
+select xm,xb from xs left join cj on cj.xh=xs.xh
+join kc on kc.kcdh=cj.kcdh
+where cj.xh is null and zy='计算机'
+
+
+(12)统计计算机系每个学生的选课门数，包括没有选课的学生
+select xs.xh,COUNT(*) from xs left join cj on cj.xh=xs.xh
+where zy='自动控制'
+group by xs.xh
+
+
+(13)查询信息管理系选课门数少于3门的学生的学号和选课门数，包括没选课的学生。查询结果按选课门数递增排序
+select xs.xh,COUNT(*) from xs left join cj on cj.xh=xs.xh
+where zy='自动控制'
+group by xs.xh
+having count(*)<3
+order by COUNT(*) asc
+
+
+(14)查询年龄最大的三个学生的姓名、年龄及所在系
+select top 3 xm,YEAR(GETDATE())-YEAR(csrq),zy
+from xs 
+order by csrq asc
+
+
+(15)查询VB考试成绩最高的前三名学生的姓名、所在系和VB考试成绩
+select top 3 xm,zy,cj,kcm 
+from xs join cj on cj.xh=xs.xh
+join kc on cj.kcdh=kc.kcdh
+where kcm='中文Windows 95'
+order by cj desc
+
+(16)查询选课人数最少的两门课程(不包括没有人选的课程)，列出课程号和选课人数
+
+select top 2 kcdh,COUNT(*) from xs join cj on cj.xh=xs.xh
+group by kcdh
+order by COUNT(*) asc
+
+(17)查询计算机系选课门数超过两门的学生中，考试平均成绩最高的前两名（包括并列的情况）学生的学号、选课门数和平均成绩。
+select top 2 with ties xs.xh,COUNT(*),AVG(cj) from xs join cj on cj.xh=xs.xh
+where zy='自动控制'            
+group by xs.xh
+having COUNT(*)>2
+order by AVG(cj) desc
+
+
+
+

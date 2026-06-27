@@ -1,0 +1,32 @@
+select avg(year(getdate())-year(csrq)) from xs
+
+select max(cj),min(cj),count(*) from cj
+group by kcdh
+
+select avg(cj),xh from cj
+group by xh
+
+select max(cj),xh from cj
+where cj>=60
+group by xh
+
+select kcdh,count(*) from cj 
+group by kcdh 
+having count(*)<3
+
+select avg(cj),xh from cj
+group by xh
+having avg(cj)>80
+
+select xh,count(*) from cj
+group by xh
+order by count(*)
+
+select avg(cj),count(*) from cj
+group by xh
+having count(*)>2
+
+select xh,sum(cj) from cj
+group by xh
+having sum(cj)>200
+
